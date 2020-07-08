@@ -1,6 +1,10 @@
 
 # luminance-glyph
 
+[![crates.io](https://img.shields.io/crates/v/luminance-glyph.svg)](https://crates.io/crates/luminance-glyph)
+[![Documentation](https://docs.rs/luminance-glyph/badge.svg)](https://docs.rs/luminance-glyph)
+[![License](https://img.shields.io/crates/l/luminance-glyph.svg)](https://github.com/JohnDoneth/luminance-glyph/blob/master/LICENSE)
+
 A fast text renderer for [luminance](https://github.com/phaazon/luminance-rs), powered by [glyph_brush](https://github.com/alexheretic/glyph-brush/tree/master/glyph-brush). Initially forked and modified from [glow_glyph](https://github.com/hecrj/glow_glyph) by [hecrj](https://github.com/hecrj). Many thanks to [hecrj](https://github.com/hecrj)!
 
 ```rust
