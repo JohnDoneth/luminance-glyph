@@ -1,6 +1,8 @@
-//! A fast text renderer for [`glow`]. Powered by [`glyph_brush`].
+//! A fast text renderer for [`luminance`], powered by [`glyph_brush`].
 //!
-//! [`glow`]: https://github.com/grovesNL/glow
+//! Initially forked and modified from [glow_glyph](https://github.com/hecrj/glow_glyph) by [hecrj](https://github.com/hecrj). Many thanks to [hecrj](https://github.com/hecrj)!
+//!
+//! [`luminance`]: https://github.com/phaazon/luminance-rs
 //! [`glyph_brush`]: https://github.com/alexheretic/glyph-brush/tree/master/glyph-brush
 #![deny(unused_results)]
 mod builder;
@@ -176,8 +178,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
         C: GraphicsContext,
     {
         //self.process_queued(context);
-        self.pipeline
-            .draw(pipeline, shading_gate, transform, None);
+        self.pipeline.draw(pipeline, shading_gate, transform, None);
 
         Ok(())
     }
