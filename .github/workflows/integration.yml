@@ -9,8 +9,15 @@ jobs:
         rust: [stable, beta]
     steps:
       - uses: actions/checkout@master
+        
+        # Install OS specific dependencies
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y libxrandr-dev libxinerama-dev libxcursor-dev
+        
       - uses: hecrj/setup-rust-action@v1
         with:
           rust-version: ${{ matrix.rust }}
+
       - name: Run tests
         run: cargo test --verbose
