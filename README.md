@@ -1,6 +1,7 @@
 
 # luminance-glyph
 
+[![Integration status](https://github.com/JohnDoneth/luminance-glyph/workflows/Integration/badge.svg)](https://github.com/JohnDoneth/luminance-glyph/actions)
 [![crates.io](https://img.shields.io/crates/v/luminance-glyph.svg)](https://crates.io/crates/luminance-glyph)
 [![Documentation](https://docs.rs/luminance-glyph/badge.svg)](https://docs.rs/luminance-glyph)
 [![License](https://img.shields.io/crates/l/luminance-glyph.svg)](https://github.com/JohnDoneth/luminance-glyph/blob/master/LICENSE)
