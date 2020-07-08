@@ -651,16 +651,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "luminance-windowing"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad15bb531192e10ee9feb7d0d6fd207189ac718f182f244d2a2293c51ea2406c"
-dependencies = [
- "luminance",
-]
-
-[[package]]
-name = "luminance_glyph"
+name = "luminance-glyph"
 version = "0.1.0"
 dependencies = [
  "glyph_brush",
@@ -669,6 +660,15 @@ dependencies = [
  "luminance-derive",
  "luminance-glfw",
  "luminance-glutin",
+]
+
+[[package]]
+name = "luminance-windowing"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad15bb531192e10ee9feb7d0d6fd207189ac718f182f244d2a2293c51ea2406c"
+dependencies = [
+ "luminance",
 ]
 
 [[package]]

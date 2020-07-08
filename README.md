@@ -1,5 +1,5 @@
 
-# luminance_glyph
+# luminance-glyph
 
 A fast text renderer for [luminance](https://github.com/phaazon/luminance-rs), powered by [glyph_brush](https://github.com/alexheretic/glyph-brush/tree/master/glyph-brush). Initially forked and modified from [glow_glyph](https://github.com/hecrj/glow_glyph) by [hecrj](https://github.com/hecrj). Many thanks to [hecrj](https://github.com/hecrj)!
 
