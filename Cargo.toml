@@ -1,5 +1,6 @@
 [package]
 name = "luminance-glyph"
+description = "A fast text renderer for luminance, powered by glyph_brush."
 version = "0.1.0"
 authors = ["John Doneth <doneth7@gmail.com>"]
 edition = "2018"
