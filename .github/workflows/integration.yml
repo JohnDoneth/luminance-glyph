@@ -13,7 +13,7 @@ jobs:
         # Install OS specific dependencies
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install -y libxrandr-dev 
+        run: sudo apt-get install -y libxrandr-dev libxinerama-dev
         
       - uses: hecrj/setup-rust-action@v1
         with:
