@@ -10,12 +10,15 @@ readme = "README.md"
 repository = "https://github.com/JohnDoneth/luminance-glyph"
 
 [dependencies]
-luminance = "0.39"
-luminance-derive = "0.5"
+luminance = "0.41"
+luminance-derive = "0.6"
 glyph_brush = "0.7"
 log = "0.4.8"
+luminance-front = "0.2"
+glfw = "0.39.1"
 
 [dev-dependencies]
-luminance-derive = "0.5"
-luminance-glfw = "0.12"
-luminance-glutin = "0.9"
+luminance-derive = "0.6"
+luminance-glfw = "0.13"
+luminance-glutin = "0.10"
+luminance-windowing = "^0.9"

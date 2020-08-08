@@ -1,6 +1,6 @@
 use luminance::context::GraphicsContext;
 use luminance::pixel::NormR8UI;
-use luminance::texture::{Dim2, GenMipmaps, MagFilter, MinFilter, Sampler, Texture, Wrap};
+use luminance_front::texture::{Dim2, GenMipmaps, MagFilter, MinFilter, Sampler, Texture, Wrap};
 pub struct Cache {
     pub(crate) texture: Texture<Dim2, NormR8UI>,
 }
@@ -8,7 +8,7 @@ pub struct Cache {
 impl Cache {
     pub fn new<C>(context: &mut C, width: u32, height: u32) -> Cache
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         let texture = Texture::new(
             context,
@@ -74,7 +74,7 @@ impl Cache {
         // Cache { texture }
     }
 
-    pub fn update(&self, offset: [u16; 2], size: [u16; 2], data: &[u8]) {
+    pub fn update(&mut self, offset: [u16; 2], size: [u16; 2], data: &[u8]) {
         let offset = [offset[0] as u32, offset[1] as u32];
         let size = [size[0] as u32, size[1] as u32];
 
