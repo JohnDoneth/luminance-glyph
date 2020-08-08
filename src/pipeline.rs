@@ -9,7 +9,7 @@ use luminance_derive::UniformInterface;
 use luminance_derive::{Semantics, Vertex};
 use luminance_front::blending::{Blending, Equation, Factor};
 use luminance_front::context::GraphicsContext;
-use luminance_front::pipeline::{TextureBinding, Pipeline as LuminancePipeline};
+use luminance_front::pipeline::{Pipeline as LuminancePipeline, TextureBinding};
 use luminance_front::pixel::NormUnsigned;
 use luminance_front::render_state::RenderState;
 use luminance_front::shader::{Program, Uniform};
