@@ -66,7 +66,7 @@ impl<F: Font, H: BuildHasher> GlyphBrushBuilder<F, H> {
     /// Builds a `GlyphBrush` in the given `glow::Context`.
     pub fn build<C>(self, context: &mut C) -> GlyphBrush<F, H>
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         GlyphBrush::<F, H>::new(context, self.inner)
     }

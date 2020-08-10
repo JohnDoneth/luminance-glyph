@@ -11,8 +11,7 @@ mod region;
 
 pub use region::Region;
 
-use luminance::pipeline::Pipeline as LuminancePipeline;
-use luminance::pipeline::ShadingGate;
+use luminance_front::pipeline::Pipeline as LuminancePipeline;
 use pipeline::{Instance, Pipeline};
 
 pub use builder::GlyphBrushBuilder;
@@ -32,6 +31,8 @@ use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 
 use luminance::context::GraphicsContext;
+use luminance::pipeline::PipelineError;
+use luminance_front::shading_gate::ShadingGate;
 
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
 /// glyph draw caching & efficient GPU texture cache updating and re-sizing on demand.
@@ -141,16 +142,13 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
     /// Panics if the provided `target` has a texture format that does not match
     /// the `render_format` provided on creation of the `GlyphBrush`.
     #[inline]
-    pub fn draw_queued<'a, C>(
+    pub fn draw_queued<'a>(
         &mut self,
         pipeline: &mut LuminancePipeline<'a>,
-        shading_gate: &mut ShadingGate<'a, C>,
+        shading_gate: &mut ShadingGate<'a>,
         target_width: u32,
         target_height: u32,
-    ) -> Result<(), String>
-    where
-        C: GraphicsContext,
-    {
+    ) -> Result<(), PipelineError> {
         self.draw_queued_with_transform(
             pipeline,
             shading_gate,
@@ -168,19 +166,14 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
     /// Panics if the provided `target` has a texture format that does not match
     /// the `render_format` provided on creation of the `GlyphBrush`.
     #[inline]
-    pub fn draw_queued_with_transform<'a, C>(
+    pub fn draw_queued_with_transform<'a>(
         &mut self,
         pipeline: &mut LuminancePipeline<'a>,
-        shading_gate: &mut ShadingGate<'a, C>,
+        shading_gate: &mut ShadingGate<'a>,
         transform: [f32; 16],
-    ) -> Result<(), String>
-    where
-        C: GraphicsContext,
-    {
+    ) -> Result<(), PipelineError> {
         //self.process_queued(context);
-        self.pipeline.draw(pipeline, shading_gate, transform, None);
-
-        Ok(())
+        self.pipeline.draw(pipeline, shading_gate, transform, None)
     }
 
     /// Draws all queued sections onto a render target, applying a position
@@ -193,26 +186,21 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
     /// Panics if the provided `target` has a texture format that does not match
     /// the `render_format` provided on creation of the `GlyphBrush`.
     #[inline]
-    pub fn draw_queued_with_transform_and_scissoring<'a, C>(
+    pub fn draw_queued_with_transform_and_scissoring<'a>(
         &mut self,
         pipeline: &mut LuminancePipeline<'a>,
-        shading_gate: &mut ShadingGate<'a, C>,
+        shading_gate: &mut ShadingGate<'a>,
         transform: [f32; 16],
         region: Region,
-    ) -> Result<(), String>
-    where
-        C: GraphicsContext,
-    {
+    ) -> Result<(), PipelineError> {
         //self.process_queued(context);
         self.pipeline
-            .draw(pipeline, shading_gate, transform, Some(region));
-
-        Ok(())
+            .draw(pipeline, shading_gate, transform, Some(region))
     }
 
     pub fn process_queued<C>(&mut self, context: &mut C)
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         let pipeline = &mut self.pipeline;
 
@@ -273,7 +261,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
 impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
     fn new<C>(context: &mut C, raw_builder: glyph_brush::GlyphBrushBuilder<F, H>) -> Self
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         let glyph_brush = raw_builder.build();
         let (cache_width, cache_height) = glyph_brush.texture_dimensions();

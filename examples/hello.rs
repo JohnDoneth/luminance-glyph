@@ -1,15 +1,21 @@
+use glfw::{Action, Context, Key, WindowEvent};
 use glyph_brush::Text;
 use luminance::context::GraphicsContext as _;
 use luminance::pipeline::PipelineState;
-use luminance_glfw::{Action, GlfwSurface, Key, Surface, WindowDim, WindowEvent, WindowOpt};
+use luminance_glfw::GlfwSurface;
 use luminance_glyph::{ab_glyph, GlyphBrushBuilder, Section};
+use luminance_windowing::{WindowDim, WindowOpt};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut surface = GlfwSurface::new(
-        WindowDim::Windowed(1024, 720),
+    let mut surface = GlfwSurface::new_gl33(
         "Luminance Glyph",
-        WindowOpt::default().set_num_samples(2),
+        WindowOpt::default()
+            .set_num_samples(2)
+            .set_dim(WindowDim::Windowed {
+                width: 1024,
+                height: 720,
+            }),
     )
     .expect("GLFW surface creation");
 
@@ -22,7 +28,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut back_buffer = surface.back_buffer().unwrap();
 
     'app: loop {
-        for event in surface.poll_events() {
+        surface.window.glfw.poll_events();
+        for (_, event) in surface.events_rx.try_iter() {
             match event {
                 WindowEvent::Close | WindowEvent::Key(Key::Escape, _, Action::Release, _) => {
                     break 'app
@@ -44,9 +51,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             resize = false;
         }
 
+        let (width, height) = surface.window.get_size();
         glyph_brush.queue(Section {
             screen_position: (30.0, 30.0),
-            bounds: (surface.width() as f32, surface.height() as f32),
+            bounds: (width as f32, height as f32),
             text: vec![Text::default()
                 .with_text("Hello luminance_glyph!")
                 .with_color([1.0, 1.0, 1.0, 1.0])
@@ -56,17 +64,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         glyph_brush.process_queued(&mut surface);
 
-        surface.pipeline_builder().pipeline(
+        let render = surface.new_pipeline_gate().pipeline(
             &back_buffer,
             &PipelineState::default().set_clear_color([0.2, 0.2, 0.2, 1.0]),
             |mut pipeline, mut shd_gate| {
-                glyph_brush
-                    .draw_queued(&mut pipeline, &mut shd_gate, 1024, 720)
-                    .expect("failed to render glyphs");
+                glyph_brush.draw_queued(&mut pipeline, &mut shd_gate, 1024, 720)
             },
         );
 
-        surface.swap_buffers();
+        render.assume().into_result()?;
+        surface.window.swap_buffers();
     }
 
     Ok(())

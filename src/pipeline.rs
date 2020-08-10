@@ -4,23 +4,24 @@ use crate::ab_glyph::{point, Rect};
 use crate::Region;
 use cache::Cache;
 
-use luminance::blending::{Equation, Factor};
-use luminance::context::GraphicsContext;
-use luminance::pipeline::BoundTexture;
-use luminance::pipeline::Pipeline as LuminancePipeline;
-use luminance::pipeline::ShadingGate;
-use luminance::pixel::NormUnsigned;
-use luminance::render_state::RenderState;
-use luminance::shader::program::Program;
-use luminance::shader::program::Uniform;
-use luminance::tess::{Mode, Tess, TessBuilder};
-use luminance::texture::Dim2;
+use luminance::pipeline::PipelineError;
 use luminance_derive::UniformInterface;
 use luminance_derive::{Semantics, Vertex};
+use luminance_front::blending::{Blending, Equation, Factor};
+use luminance_front::context::GraphicsContext;
+use luminance_front::pipeline::{Pipeline as LuminancePipeline, TextureBinding};
+use luminance_front::pixel::NormUnsigned;
+use luminance_front::render_state::RenderState;
+use luminance_front::shader::{Program, Uniform};
+use luminance_front::shading_gate::ShadingGate;
+use luminance_front::tess::{Interleaved, Mode, Tess, TessBuilder};
+use luminance_front::texture::Dim2;
+
+type VertexIndex = u32;
 
 pub struct Pipeline {
     program: Program<Semantics, (), ShaderInterface>,
-    vertex_array: Option<Tess>,
+    vertex_array: Option<Tess<(), VertexIndex, Instance, Interleaved>>,
     cache: Cache,
 }
 
@@ -112,18 +113,19 @@ impl Instance {
 #[derive(UniformInterface)]
 struct ShaderInterface {
     transform: Uniform<[[f32; 4]; 4]>,
-
-    font_sampler: Uniform<&'static BoundTexture<'static, Dim2, NormUnsigned>>,
+    font_sampler: Uniform<TextureBinding<Dim2, NormUnsigned>>,
 }
 
 impl Pipeline {
-    pub fn new<C>(ctx: &mut C, cache_width: u32, cache_height: u32) -> Pipeline
+    pub fn new<C>(ctx: &mut C, cache_width: u32, cache_height: u32) -> Self
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         let cache = Cache::new(ctx, cache_width, cache_height);
 
-        let program = Program::<Semantics, (), ShaderInterface>::from_strings(None, VS, None, FS)
+        let program = ctx
+            .new_shader_program::<Semantics, (), ShaderInterface>()
+            .from_strings(VS, None, None, FS)
             .expect("shader failed to compile")
             .program;
 
@@ -134,35 +136,33 @@ impl Pipeline {
         }
     }
 
-    pub fn draw<'a, C>(
+    pub fn draw<'a>(
         &mut self,
         pipeline: &mut LuminancePipeline<'a>,
-        shading_gate: &mut ShadingGate<'a, C>,
+        shading_gate: &mut ShadingGate<'a>,
         transform: [f32; 16],
         _region: Option<Region>,
-    ) where
-        C: GraphicsContext,
-    {
+    ) -> Result<(), PipelineError> {
         if let Some(vao) = &self.vertex_array {
-            let bound_texture = pipeline.bind_texture(&self.cache.texture);
+            let bound_texture = pipeline.bind_texture(&mut self.cache.texture)?;
 
             // Start shading with our program.
-            shading_gate.shade(&self.program, |iface, mut rdr_gate| {
-                iface.transform.update(to_4x4(&transform));
-                iface.font_sampler.update(&bound_texture);
+            shading_gate.shade(&mut self.program, |mut iface, uni, mut rdr_gate| {
+                iface.set(&uni.transform, to_4x4(&transform));
+                iface.set(&uni.font_sampler, bound_texture.binding());
 
                 // Start rendering things with the default render state provided by luminance.
                 rdr_gate.render(
-                    &RenderState::default().set_blending((
-                        Equation::Additive,
-                        Factor::SrcAlpha,
-                        Factor::SrcAlphaComplement,
-                    )),
-                    |mut tess_gate| {
-                        tess_gate.render(vao);
-                    },
-                );
-            });
+                    &RenderState::default().set_blending(Blending {
+                        equation: Equation::Additive,
+                        src: Factor::SrcAlpha,
+                        dst: Factor::SrcAlphaComplement,
+                    }),
+                    |mut tess_gate| tess_gate.render(vao),
+                )
+            })
+        } else {
+            Ok(())
         }
     }
 
@@ -172,18 +172,18 @@ impl Pipeline {
 
     pub fn increase_cache_size<C>(&mut self, ctx: &mut C, width: u32, height: u32)
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         self.cache = Cache::new(ctx, width, height);
     }
 
     pub fn upload<C>(&mut self, ctx: &mut C, instances: &[Instance])
     where
-        C: GraphicsContext,
+        C: GraphicsContext<Backend = luminance_front::Backend>,
     {
         self.vertex_array = Some(
             TessBuilder::new(ctx)
-                .add_instances(instances)
+                .set_instances(instances)
                 .set_vertex_nb(4)
                 .set_mode(Mode::TriangleStrip)
                 .build()
