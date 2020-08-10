@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut back_buffer = surface.back_buffer().unwrap();
 
     'app: loop {
-        // FIXME: This doesn't seem to work for window events on linux/wayland(mutter)
+        surface.window.glfw.poll_events();
         for (_, event) in surface.events_rx.try_iter() {
             match event {
                 WindowEvent::Close | WindowEvent::Key(Key::Escape, _, Action::Release, _) => {
