@@ -1,11 +1,11 @@
-use core::hash::BuildHasher;
-
-use glyph_brush::ab_glyph::Font;
-use glyph_brush::delegate_glyph_brush_builder_fns;
-use glyph_brush::DefaultSectionHasher;
-use luminance::context::GraphicsContext;
-
 use super::GlyphBrush;
+use crate::Instance;
+use core::hash::BuildHasher;
+use glyph_brush::{ab_glyph::Font, delegate_glyph_brush_builder_fns, DefaultSectionHasher};
+use luminance::{
+    backend, context::GraphicsContext, pipeline::TextureBinding, pixel::NormR8UI,
+    pixel::NormUnsigned, tess::Interleaved, texture::Dim2,
+};
 
 /// Builder for a [`GlyphBrush`](struct.GlyphBrush.html).
 pub struct GlyphBrushBuilder<F, H = DefaultSectionHasher> {
@@ -64,10 +64,19 @@ impl<F: Font, H: BuildHasher> GlyphBrushBuilder<F, H> {
     }
 
     /// Builds a `GlyphBrush` in the given `glow::Context`.
-    pub fn build<C>(self, context: &mut C) -> GlyphBrush<F, H>
+    pub fn build<C>(self, context: &mut C) -> GlyphBrush<C::Backend, F, H>
     where
-        C: GraphicsContext<Backend = luminance_front::Backend>,
+        C: GraphicsContext,
+        C::Backend: backend::texture::Texture<Dim2, NormR8UI>
+            + backend::shader::Shader
+            + backend::tess::Tess<(), u32, Instance, Interleaved>
+            + backend::pipeline::PipelineBase
+            + backend::pipeline::PipelineTexture<Dim2, NormR8UI>
+            + backend::render_gate::RenderGate
+            + backend::tess_gate::TessGate<(), u32, Instance, Interleaved>,
+        [[f32; 4]; 4]: backend::shader::Uniformable<C::Backend>,
+        TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<C::Backend>,
     {
-        GlyphBrush::<F, H>::new(context, self.inner)
+        GlyphBrush::new(context, self.inner)
     }
 }

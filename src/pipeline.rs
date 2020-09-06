@@ -4,25 +4,34 @@ use crate::ab_glyph::{point, Rect};
 use crate::Region;
 use cache::Cache;
 
-use luminance::pipeline::PipelineError;
-use luminance_derive::UniformInterface;
-use luminance_derive::{Semantics, Vertex};
-use luminance_front::blending::{Blending, Equation, Factor};
-use luminance_front::context::GraphicsContext;
-use luminance_front::pipeline::{Pipeline as LuminancePipeline, TextureBinding};
-use luminance_front::pixel::NormUnsigned;
-use luminance_front::render_state::RenderState;
-use luminance_front::shader::{Program, Uniform};
-use luminance_front::shading_gate::ShadingGate;
-use luminance_front::tess::{Interleaved, Mode, Tess, TessBuilder};
-use luminance_front::texture::Dim2;
+use luminance::{
+    backend,
+    blending::{Blending, Equation, Factor},
+    context::GraphicsContext,
+    pipeline::{Pipeline as LuminancePipeline, PipelineError, TextureBinding},
+    pixel::{NormR8UI, NormUnsigned},
+    render_state::RenderState,
+    shader::{Program, Uniform},
+    shading_gate::ShadingGate,
+    tess::{Interleaved, Mode, Tess, TessBuilder},
+    texture::Dim2,
+};
+use luminance_derive::{Semantics, UniformInterface, Vertex};
 
 type VertexIndex = u32;
 
-pub struct Pipeline {
-    program: Program<Semantics, (), ShaderInterface>,
-    vertex_array: Option<Tess<(), VertexIndex, Instance, Interleaved>>,
-    cache: Cache,
+pub struct Pipeline<B>
+where
+    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
+    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
+    B: ?Sized
+        + backend::texture::Texture<Dim2, NormR8UI>
+        + backend::shader::Shader
+        + backend::tess::Tess<(), u32, Instance, Interleaved>,
+{
+    program: Program<B, Semantics, (), ShaderInterface>,
+    vertex_array: Option<Tess<B, (), VertexIndex, Instance, Interleaved>>,
+    cache: Cache<B>,
 }
 
 const VS: &str = include_str!("./shaders/vertex.glsl");
@@ -116,10 +125,22 @@ struct ShaderInterface {
     font_sampler: Uniform<TextureBinding<Dim2, NormUnsigned>>,
 }
 
-impl Pipeline {
+impl<B> Pipeline<B>
+where
+    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
+    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
+    B: ?Sized
+        + backend::pipeline::PipelineTexture<Dim2, NormR8UI>
+        + backend::texture::Texture<Dim2, NormR8UI>
+        + backend::shader::Shader
+        + backend::tess::Tess<(), u32, Instance, Interleaved>
+        + backend::pipeline::PipelineBase
+        + backend::render_gate::RenderGate
+        + backend::tess_gate::TessGate<(), u32, Instance, Interleaved>,
+{
     pub fn new<C>(ctx: &mut C, cache_width: u32, cache_height: u32) -> Self
     where
-        C: GraphicsContext<Backend = luminance_front::Backend>,
+        C: GraphicsContext<Backend = B>,
     {
         let cache = Cache::new(ctx, cache_width, cache_height);
 
@@ -138,11 +159,14 @@ impl Pipeline {
 
     pub fn draw<'a>(
         &mut self,
-        pipeline: &mut LuminancePipeline<'a>,
-        shading_gate: &mut ShadingGate<'a>,
+        pipeline: &mut LuminancePipeline<'a, B>,
+        shading_gate: &mut ShadingGate<'a, B>,
         transform: [f32; 16],
         _region: Option<Region>,
-    ) -> Result<(), PipelineError> {
+    ) -> Result<(), PipelineError>
+    where
+        B: Sized, // Note: This is likely an oversight in `luminance`, might be removed sometime
+    {
         if let Some(vao) = &self.vertex_array {
             let bound_texture = pipeline.bind_texture(&mut self.cache.texture)?;
 
@@ -172,14 +196,14 @@ impl Pipeline {
 
     pub fn increase_cache_size<C>(&mut self, ctx: &mut C, width: u32, height: u32)
     where
-        C: GraphicsContext<Backend = luminance_front::Backend>,
+        C: GraphicsContext<Backend = B>,
     {
         self.cache = Cache::new(ctx, width, height);
     }
 
     pub fn upload<C>(&mut self, ctx: &mut C, instances: &[Instance])
     where
-        C: GraphicsContext<Backend = luminance_front::Backend>,
+        C: GraphicsContext<Backend = B>,
     {
         self.vertex_array = Some(
             TessBuilder::new(ctx)
