@@ -25,8 +25,8 @@ pub struct Pipeline {
     cache: Cache,
 }
 
-const VS: &'static str = include_str!("./shaders/vertex.glsl");
-const FS: &'static str = include_str!("./shaders/fragment.glsl");
+const VS: &str = include_str!("./shaders/vertex.glsl");
+const FS: &str = include_str!("./shaders/fragment.glsl");
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Semantics)]
 pub enum Semantics {
