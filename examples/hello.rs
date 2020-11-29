@@ -1,7 +1,6 @@
-use glfw::{Action, Context, Key, WindowEvent};
+use glfw::{Action, Context as _, Key, WindowEvent};
 use glyph_brush::Text;
-use luminance::context::GraphicsContext as _;
-use luminance::pipeline::PipelineState;
+use luminance::{context::GraphicsContext as _, pipeline::PipelineState};
 use luminance_glfw::GlfwSurface;
 use luminance_glyph::{ab_glyph, GlyphBrushBuilder, Section};
 use luminance_windowing::{WindowDim, WindowOpt};

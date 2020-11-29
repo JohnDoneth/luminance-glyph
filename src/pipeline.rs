@@ -15,8 +15,8 @@ use luminance::{
     shading_gate::ShadingGate,
     tess::{Interleaved, Mode, Tess, TessBuilder},
     texture::Dim2,
+    Semantics, UniformInterface, Vertex,
 };
-use luminance_derive::{Semantics, UniformInterface, Vertex};
 
 type VertexIndex = u32;
 
