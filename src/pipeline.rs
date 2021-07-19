@@ -208,7 +208,7 @@ where
         self.vertex_array = Some(
             TessBuilder::new(ctx)
                 .set_instances(instances)
-                .set_vertex_nb(4)
+                .set_render_vertex_nb(4)
                 .set_mode(Mode::TriangleStrip)
                 .build()
                 .unwrap(),

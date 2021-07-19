@@ -20,20 +20,20 @@ where
     where
         C: GraphicsContext<Backend = B>,
     {
-        let texture = Texture::new(
-            context,
-            [width, height],
-            0,
-            Sampler {
-                wrap_r: Wrap::ClampToEdge,
-                wrap_s: Wrap::ClampToEdge,
-                wrap_t: Wrap::ClampToEdge,
-                min_filter: MinFilter::Linear,
-                mag_filter: MagFilter::Linear,
-                depth_comparison: None,
-            },
-        )
-        .expect("failed to create texture");
+        let texture = context
+            .new_texture_no_texels(
+                [width, height],
+                0,
+                Sampler {
+                    wrap_r: Wrap::ClampToEdge,
+                    wrap_s: Wrap::ClampToEdge,
+                    wrap_t: Wrap::ClampToEdge,
+                    min_filter: MinFilter::Linear,
+                    mag_filter: MagFilter::Linear,
+                    depth_comparison: None,
+                },
+            )
+            .expect("failed to create texture");
 
         Cache { texture }
 
