@@ -7,7 +7,7 @@ use luminance_windowing::{WindowDim, WindowOpt};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut surface = GlfwSurface::new_gl33(
+    let surface = GlfwSurface::new_gl33(
         "Luminance Glyph",
         WindowOpt::default()
             .set_num_samples(2)
@@ -18,16 +18,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     )
     .expect("GLFW surface creation");
 
+    let mut context = surface.context;
+
     let mut glyph_brush = GlyphBrushBuilder::using_font(ab_glyph::FontArc::try_from_slice(
         include_bytes!("Inconsolata-Regular.ttf"),
     )?)
-    .build(&mut surface);
+    .build(&mut context);
 
     let mut resize = false;
-    let mut back_buffer = surface.back_buffer().unwrap();
+    let mut back_buffer = context.back_buffer().unwrap();
 
     'app: loop {
-        surface.window.glfw.poll_events();
+        context.window.glfw.poll_events();
         for (_, event) in surface.events_rx.try_iter() {
             match event {
                 WindowEvent::Close | WindowEvent::Key(Key::Escape, _, Action::Release, _) => {
@@ -45,12 +47,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if resize {
             // Simply ask another backbuffer at the right dimension (no allocation / reallocation).
-            back_buffer = surface.back_buffer().unwrap();
-            surface.back_buffer().unwrap();
+            back_buffer = context.back_buffer().unwrap();
+            context.back_buffer().unwrap();
             resize = false;
         }
 
-        let (width, height) = surface.window.get_size();
+        let (width, height) = context.window.get_size();
         glyph_brush.queue(Section {
             screen_position: (30.0, 30.0),
             bounds: (width as f32, height as f32),
@@ -61,9 +63,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             ..Section::default()
         });
 
-        glyph_brush.process_queued(&mut surface);
+        glyph_brush.process_queued(&mut context);
 
-        let render = surface.new_pipeline_gate().pipeline(
+        let render = context.new_pipeline_gate().pipeline(
             &back_buffer,
             &PipelineState::default().set_clear_color([0.2, 0.2, 0.2, 1.0]),
             |mut pipeline, mut shd_gate| {
@@ -72,7 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
 
         render.assume().into_result()?;
-        surface.window.swap_buffers();
+        context.window.swap_buffers();
     }
 
     Ok(())
