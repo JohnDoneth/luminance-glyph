@@ -15,7 +15,7 @@ log = "0.4.14"
 luminance = "0.44.1"
 
 [dev-dependencies]
-glfw = "0.42.0"
+glfw = "0.41.0"
 luminance-gl = "0.17.0"
 luminance-glfw = "0.16.0"
 luminance-glutin = "0.12.0"

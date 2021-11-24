@@ -1,11 +1,8 @@
 use super::GlyphBrush;
-use crate::{GlyphBrushBackend, Instance};
+use crate::GlyphBrushBackend;
 use core::hash::BuildHasher;
 use glyph_brush::{ab_glyph::Font, delegate_glyph_brush_builder_fns, DefaultSectionHasher};
-use luminance::{
-    backend, context::GraphicsContext, pipeline::TextureBinding, pixel::NormR8UI,
-    pixel::NormUnsigned, tess::Interleaved, texture::Dim2,
-};
+use luminance::context::GraphicsContext;
 
 /// Builder for a [`GlyphBrush`](struct.GlyphBrush.html).
 pub struct GlyphBrushBuilder<F, H = DefaultSectionHasher> {
