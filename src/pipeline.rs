@@ -8,11 +8,10 @@ use crate::{
 use cache::Cache;
 
 use luminance::{
-    backend,
     blending::{Blending, Equation, Factor},
     context::GraphicsContext,
     pipeline::{Pipeline as LuminancePipeline, PipelineError, TextureBinding},
-    pixel::{NormR8UI, NormUnsigned},
+    pixel::NormUnsigned,
     render_state::RenderState,
     shader::{types::Mat44, Program, Uniform},
     shading_gate::ShadingGate,

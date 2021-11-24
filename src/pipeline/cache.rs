@@ -2,7 +2,7 @@ use luminance::{
     backend,
     context::GraphicsContext,
     pixel::NormR8UI,
-    texture::{Dim2, GenMipmaps, MagFilter, MinFilter, Sampler, Texture, Wrap},
+    texture::{Dim2, MagFilter, MinFilter, Sampler, TexelUpload, Texture, Wrap},
 };
 
 pub struct Cache<B>
@@ -20,10 +20,10 @@ where
     where
         C: GraphicsContext<Backend = B>,
     {
+        let texels = &vec![0; (width * height) as usize][..];
         let texture = context
-            .new_texture_no_texels(
+            .new_texture(
                 [width, height],
-                0,
                 Sampler {
                     wrap_r: Wrap::ClampToEdge,
                     wrap_s: Wrap::ClampToEdge,
@@ -31,6 +31,10 @@ where
                     min_filter: MinFilter::Linear,
                     mag_filter: MagFilter::Linear,
                     depth_comparison: None,
+                },
+                TexelUpload::BaseLevel {
+                    texels,
+                    mipmaps: None,
                 },
             )
             .expect("failed to create texture");
@@ -89,7 +93,14 @@ where
         let size = [size[0] as u32, size[1] as u32];
 
         self.texture
-            .upload_part_raw(GenMipmaps::No, offset, size, data)
+            .upload_part_raw(
+                offset,
+                size,
+                TexelUpload::BaseLevel {
+                    texels: data,
+                    mipmaps: None,
+                },
+            )
             .expect("failed to upload to texture region");
 
         // let [offset_x, offset_y] = offset;
