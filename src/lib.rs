@@ -18,6 +18,7 @@ use luminance::{
     pipeline::{Pipeline as LuminancePipeline, TextureBinding},
     pixel::NormR8UI,
     pixel::NormUnsigned,
+    shader::types::Mat44,
     shading_gate::ShadingGate,
     tess::Interleaved,
     texture::Dim2,
@@ -42,18 +43,45 @@ use std::borrow::Cow;
 use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 
+pub trait GlyphBrushBackend:
+    backend::pipeline::PipelineTexture<Dim2, NormR8UI>
+    + backend::texture::Texture<Dim2, NormR8UI>
+    + backend::shader::Shader
+    + for<'a> backend::shader::Uniformable<'a, Mat44<f32>, Target = Mat44<f32>>
+    + for<'a> backend::shader::Uniformable<
+        'a,
+        TextureBinding<Dim2, NormUnsigned>,
+        Target = TextureBinding<Dim2, NormUnsigned>,
+    > + backend::tess::Tess<(), u32, Instance, Interleaved>
+    + backend::pipeline::PipelineBase
+    + backend::render_gate::RenderGate
+    + backend::tess_gate::TessGate<(), u32, Instance, Interleaved>
+{
+}
+
+impl<B: ?Sized> GlyphBrushBackend for B where
+    B: backend::pipeline::PipelineTexture<Dim2, NormR8UI>
+        + backend::texture::Texture<Dim2, NormR8UI>
+        + backend::shader::Shader
+        + for<'a> backend::shader::Uniformable<'a, Mat44<f32>, Target = Mat44<f32>>
+        + for<'a> backend::shader::Uniformable<
+            'a,
+            TextureBinding<Dim2, NormUnsigned>,
+            Target = TextureBinding<Dim2, NormUnsigned>,
+        > + backend::tess::Tess<(), u32, Instance, Interleaved>
+        + backend::pipeline::PipelineBase
+        + backend::render_gate::RenderGate
+        + backend::tess_gate::TessGate<(), u32, Instance, Interleaved>
+{
+}
+
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
 /// glyph draw caching & efficient GPU texture cache updating and re-sizing on demand.
 ///
 /// Build using a [`GlyphBrushBuilder`](struct.GlyphBrushBuilder.html).
 pub struct GlyphBrush<B, F = FontArc, H = DefaultSectionHasher>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: ?Sized
-        + backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, pipeline::Instance, luminance::tess::Interleaved>,
+    B: GlyphBrushBackend,
 {
     pipeline: Pipeline<B>,
     glyph_brush: glyph_brush::GlyphBrush<Instance, Extra, F, H>,
@@ -61,11 +89,7 @@ where
 
 impl<B, F: Font, H: BuildHasher> GlyphBrush<B, F, H>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, pipeline::Instance, luminance::tess::Interleaved>,
+    B: GlyphBrushBackend,
 {
     /// Queues a section/layout to be drawn by the next call of
     /// [`draw_queued`](struct.GlyphBrush.html#method.draw_queued). Can be
@@ -157,14 +181,7 @@ where
 
 impl<B, F: Font + Sync, H: BuildHasher> GlyphBrush<B, F, H>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: backend::texture::Texture<Dim2, NormR8UI>
-        + backend::pipeline::PipelineBase
-        + backend::tess::Tess<(), u32, pipeline::Instance, Interleaved>
-        + backend::pipeline::PipelineTexture<Dim2, NormR8UI>
-        + backend::render_gate::RenderGate
-        + backend::tess_gate::TessGate<(), u32, pipeline::Instance, Interleaved>,
+    B: GlyphBrushBackend,
 {
     /// Draws all queued sections onto a render target.
     /// See [`queue`](struct.GlyphBrush.html#method.queue).
@@ -293,16 +310,7 @@ where
 
 impl<B, F: Font, H: BuildHasher> GlyphBrush<B, F, H>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: ?Sized
-        + backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, pipeline::Instance, luminance::tess::Interleaved>
-        + backend::pipeline::PipelineBase
-        + backend::pipeline::PipelineTexture<Dim2, NormR8UI>
-        + backend::render_gate::RenderGate
-        + backend::tess_gate::TessGate<(), u32, pipeline::Instance, Interleaved>,
+    B: GlyphBrushBackend,
 {
     fn new<C>(context: &mut C, raw_builder: glyph_brush::GlyphBrushBuilder<F, H>) -> Self
     where
@@ -331,11 +339,7 @@ pub fn orthographic_projection(width: u32, height: u32) -> [f32; 16] {
 
 impl<B, F: Font, H: BuildHasher> GlyphCruncher<F> for GlyphBrush<B, F, H>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, pipeline::Instance, luminance::tess::Interleaved>,
+    B: GlyphBrushBackend,
 {
     #[inline]
     fn glyphs_custom_layout<'a, 'b, S, L>(
@@ -373,11 +377,7 @@ where
 
 impl<B, F, H> std::fmt::Debug for GlyphBrush<B, F, H>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, pipeline::Instance, luminance::tess::Interleaved>,
+    B: GlyphBrushBackend,
 {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

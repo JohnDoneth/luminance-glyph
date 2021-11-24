@@ -1,7 +1,10 @@
 mod cache;
 
-use crate::ab_glyph::{point, Rect};
 use crate::Region;
+use crate::{
+    ab_glyph::{point, Rect},
+    GlyphBrushBackend,
+};
 use cache::Cache;
 
 use luminance::{
@@ -11,7 +14,7 @@ use luminance::{
     pipeline::{Pipeline as LuminancePipeline, PipelineError, TextureBinding},
     pixel::{NormR8UI, NormUnsigned},
     render_state::RenderState,
-    shader::{Program, Uniform},
+    shader::{types::Mat44, Program, Uniform},
     shading_gate::ShadingGate,
     tess::{Interleaved, Mode, Tess, TessBuilder},
     texture::Dim2,
@@ -22,12 +25,7 @@ type VertexIndex = u32;
 
 pub struct Pipeline<B>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: ?Sized
-        + backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, Instance, Interleaved>,
+    B: GlyphBrushBackend,
 {
     program: Program<B, Semantics, (), ShaderInterface>,
     vertex_array: Option<Tess<B, (), VertexIndex, Instance, Interleaved>>,
@@ -121,22 +119,13 @@ impl Instance {
 
 #[derive(UniformInterface)]
 struct ShaderInterface {
-    transform: Uniform<[[f32; 4]; 4]>,
+    transform: Uniform<Mat44<f32>>,
     font_sampler: Uniform<TextureBinding<Dim2, NormUnsigned>>,
 }
 
 impl<B> Pipeline<B>
 where
-    [[f32; 4]; 4]: backend::shader::Uniformable<B>,
-    TextureBinding<Dim2, NormUnsigned>: backend::shader::Uniformable<B>,
-    B: ?Sized
-        + backend::pipeline::PipelineTexture<Dim2, NormR8UI>
-        + backend::texture::Texture<Dim2, NormR8UI>
-        + backend::shader::Shader
-        + backend::tess::Tess<(), u32, Instance, Interleaved>
-        + backend::pipeline::PipelineBase
-        + backend::render_gate::RenderGate
-        + backend::tess_gate::TessGate<(), u32, Instance, Interleaved>,
+    B: GlyphBrushBackend,
 {
     pub fn new<C>(ctx: &mut C, cache_width: u32, cache_height: u32) -> Self
     where
@@ -217,6 +206,6 @@ where
 }
 
 // From: https://github.com/rust-lang/rfcs/issues/1833
-fn to_4x4(array: &[f32; 16]) -> [[f32; 4]; 4] {
-    unsafe { *(array as *const _ as *const _) }
+fn to_4x4(array: &[f32; 16]) -> Mat44<f32> {
+    Mat44(unsafe { *(array as *const _ as *const _) })
 }
