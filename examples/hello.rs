@@ -1,21 +1,22 @@
-use glfw::{Action, Context as _, Key, WindowEvent};
+use glfw::{Action, Context as _, Key, SwapInterval, WindowEvent, WindowMode};
 use glyph_brush::Text;
 use luminance::{context::GraphicsContext as _, pipeline::PipelineState};
-use luminance_glfw::GlfwSurface;
+use luminance_glfw::{GlfwSurface, GlfwSurfaceError};
 use luminance_glyph::{ab_glyph, GlyphBrushBuilder, Section};
-use luminance_windowing::{WindowDim, WindowOpt};
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let surface = GlfwSurface::new_gl33(
-        "Luminance Glyph",
-        WindowOpt::default()
-            .set_num_samples(2)
-            .set_dim(WindowDim::Windowed {
-                width: 1024,
-                height: 720,
-            }),
-    )
+    let surface = GlfwSurface::new(|glfw| {
+        let (mut window, events) = glfw
+            .create_window(1024, 720, "Luminance Glyph", WindowMode::Windowed)
+            .ok_or(GlfwSurfaceError::UserError(()))?;
+
+        window.make_current();
+        window.set_all_polling(true);
+        glfw.set_swap_interval(SwapInterval::Sync(1));
+
+        Ok((window, events))
+    })
     .expect("GLFW surface creation");
 
     let mut context = surface.context;
