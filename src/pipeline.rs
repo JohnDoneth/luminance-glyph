@@ -56,11 +56,11 @@ pub enum Semantics {
 #[derive(Clone, Copy, Debug, PartialEq, Vertex)]
 #[vertex(sem = "Semantics", instanced = "true")]
 pub struct Instance {
-    left_top: LeftTop,
-    right_bottom: RightBottom,
-    tex_left_top: TexLeftTop,
-    tex_right_bottom: TexRightBottom,
-    color: VertexColor,
+    pub left_top: LeftTop,
+    pub right_bottom: RightBottom,
+    pub tex_left_top: TexLeftTop,
+    pub tex_right_bottom: TexRightBottom,
+    pub color: VertexColor,
 }
 
 impl Instance {
