@@ -29,11 +29,11 @@ use pipeline::Pipeline;
 pub use builder::GlyphBrushBuilder;
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
-    BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
-    LineBreak, LineBreaker, Section, SectionGeometry, SectionGlyph, SectionGlyphIter, SectionText,
-    Text, VerticalAlign,
+    BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, GlyphVertex,
+    HorizontalAlign, Layout, LineBreak, LineBreaker, Section, SectionGeometry, SectionGlyph,
+    SectionGlyphIter, SectionText, Text, VerticalAlign,
 };
-pub use pipeline::Instance;
+pub use pipeline::{Instance, LeftTop, RightBottom, TexLeftTop, TexRightBottom, VertexColor};
 
 use ab_glyph::{Font, FontArc, Rect};
 
@@ -252,6 +252,16 @@ where
     where
         C: GraphicsContext<Backend = B>,
     {
+        self.process_queued_with_vertex_constructor(context, Instance::from_vertex)
+    }
+
+    pub fn process_queued_with_vertex_constructor<C>(
+        &mut self,
+        context: &mut C,
+        into_vertex: impl Fn(GlyphVertex) -> Instance,
+    ) where
+        C: GraphicsContext<Backend = B>,
+    {
         let pipeline = &mut self.pipeline;
 
         let mut brush_action;
@@ -264,7 +274,7 @@ where
 
                     pipeline.update_cache(offset, size, tex_data);
                 },
-                Instance::from_vertex,
+                &into_vertex,
             );
 
             match brush_action {
