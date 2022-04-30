@@ -12,10 +12,10 @@ version = "0.4.0"
 [dependencies]
 glyph_brush = "0.7.3"
 log = "0.4.14"
-luminance = "0.45.0"
+luminance = "0.47.0"
 
 [dev-dependencies]
-glfw = "0.42.0"
-luminance-gl = "0.18.0"
-luminance-glfw = "0.17.0"
-luminance-glutin = "0.13.0"
+glfw = "0.44.0"
+luminance-gl = "0.19.1"
+luminance-glfw = "0.18.2"
+luminance-glutin = "0.14.1"
