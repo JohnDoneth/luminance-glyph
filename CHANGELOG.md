@@ -1,3 +1,6 @@
+# 0.5
+
+Upgrade to Luminance 0.47.0
 
 # 0.4
 
