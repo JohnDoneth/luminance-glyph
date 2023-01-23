@@ -32,10 +32,7 @@ where
                     mag_filter: MagFilter::Linear,
                     depth_comparison: None,
                 },
-                TexelUpload::BaseLevel {
-                    texels,
-                    mipmaps: None,
-                },
+                TexelUpload::BaseLevel { texels, mipmaps: 0 },
             )
             .expect("failed to create texture");
 
@@ -98,7 +95,7 @@ where
                 size,
                 TexelUpload::BaseLevel {
                     texels: data,
-                    mipmaps: None,
+                    mipmaps: 0,
                 },
             )
             .expect("failed to upload to texture region");
